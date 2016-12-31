@@ -10,7 +10,7 @@ class Sink {
         else {
             this.pos = position;
             this.color = color('blue');
-            this.temperature = 0;
+            this.temperature = -100;
         }
     }
 
@@ -20,7 +20,7 @@ class Sink {
         textSize(32);
         textAlign(CENTER);
         fill('white');
-        text(int(this.temperature) + "c", this.pos.x+5, this.pos.y+25, 100, 100);
+        text(int(this.temperature), this.pos.x+5, this.pos.y+25, 100, 100);
     }
 
     reset() {
@@ -54,7 +54,7 @@ class Source {
         textSize(25);
         textAlign(CENTER);
         fill('white');
-        text(int(this.temperature) + "c (Source)", this.pos.x+5, this.pos.y+25, 100, 100);
+        text(int(this.temperature) + "  (Source)", this.pos.x+5, this.pos.y+25, 100, 100);
     }
 
     cycle(temperatureChange) {
