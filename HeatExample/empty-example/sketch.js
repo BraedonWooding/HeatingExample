@@ -80,7 +80,7 @@ function setup() {
 
 function keyPressed() {
     if (keyCode == 32) {
-        cycle();
+        cycle(undefined, undefined, 1/frameRate());
         clicks++;
     }
 }
@@ -140,10 +140,11 @@ function draw() {
     fill('green');
     text("U: " + uSlider.value(), uSlider.position().x + uSlider.size().width/2.5, uSlider.position().y - 10);
     text("K: " + kSlider.value()/10, kSlider.position().x + kSlider.size().width/2.5, kSlider.position().y - 10);
-    text("Clicks : " + clicks, (kSlider.position().x + uSlider.position().x + kSlider.size().width/1.25)/2, kSlider.position().y - 25);
+    text("Cycles : " + clicks, (kSlider.position().x + uSlider.position().x + kSlider.size().width/1.25)/2, kSlider.position().y - 25);
 
     if (pressed) {
         cycle(undefined, undefined, 1/frameRate());
+        clicks++;
     }
 
     for (var i = 0; i < sinks.length; i++) {
