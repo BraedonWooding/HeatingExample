@@ -119,7 +119,7 @@ function cycle(sourceOfHeat, startingEnergy, deltaTime) {
         }
 
         distanceOutwards++;
-        energy -= (index * pow(energy, 2)) / k;
+        energy -= (index * pow(energy, 2)) / pow(k, 2);
     }
 }
 
