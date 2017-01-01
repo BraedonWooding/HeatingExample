@@ -1,3 +1,5 @@
+remove();
+
 var sinks = [];
 var sources = [];
 var grid = [];
@@ -6,36 +8,77 @@ var WIDTH;
 var HEIGHT;
 var sourceLocation;
 
-var air_index = 0.000000597125;
-var mineralWater_index = 0.00000329613;
-var lead_index = 0.00084314;
-var water_index = 0.00014331;
-var gold_index = 0.00759543;
-var graphene_index = 0.1381;
+var air_index = 0.000000597125 / 100;
+var mineralWater_index = 0.00000329613 / 100;
+var lead_index = 0.00084314 / 100;
+var water_index = 0.00014331 / 100;
+var gold_index = 0.00759543 / 100;
+var graphene_index = 0.1381 / 100;
 
 var index = air_index;
 var k, u;
 
+var mode3D = false;
+var init = false;
+
+var textElement;
+
 var kSlider;
 var uSlider;
+
+var timer = 0;
 
 var clicks = 0;
 
 var resetButton;
+var modeButton;
 var pressed = false;
 
+var start;
+var canvas;
+var elementCanvas;
+
+function setupMode() {
+    if (mode3D) {
+        canvas = createCanvas(windowWidth, windowHeight-100, WEBGL);
+        perspective(60 / 180 * PI, width/height, 0.1, 100);
+    }
+    else {
+        canvas = createCanvas(windowWidth, windowHeight-100, P2D);
+    }
+}
+
 function setup() {
-    createCanvas(windowWidth, windowHeight-100);
+    frameRate(30);
 
-    frameRate(1);
-
-    kSlider = createSlider(1, 10, 5);
+    kSlider = createSlider(1, 10, 2);
     uSlider = createSlider(1, 200, 100);
+
+    textElement = createDiv("U: \t K: \t Cycles: ");
+    textElement.position(0, 20);
+
+    createDiv("Information: Press start to run simulation (updates every half second),<br>" +
+              "The air, mineral water... buttons indicate what index to run (it presumes every square was made out of that material),<br>" +
+              "The reset will reset the simulation,<br>" +
+              "3D toggles 3D and 2D simulation,<br>" +
+              "3D Controls: Press shift to pan, and Control to rotate the camera."
+        ).position(0, windowHeight-100);
 
     u = 100;
     k = 0.5;
 
-    createButton('Start').mousePressed(() => { pressed = !pressed; });
+    start = createButton('Start');
+
+    start.mousePressed(() => {
+        pressed = !pressed;
+
+        if (pressed) {
+            start.html("Stop");
+        }
+        else {
+            start.html("Start");
+        }
+    });
 
     createButton('Air').mousePressed(() => { index = air_index; });
     createButton('Mineral Water').mousePressed(() => { index = mineralWater_index; });
@@ -47,42 +90,67 @@ function setup() {
     resetButton = createButton('Reset');
     resetButton.mousePressed(() => { reset(); })
 
-    // Create Sinks and Sources
-    // Get width of map and height of map
-    WIDTH = createVector(int(windowWidth/650), int(windowWidth/125));
-    HEIGHT = createVector(0, int(windowHeight/125));
+    modeButton = createButton('3D');
+    modeButton.mousePressed(() => {
+        mode3D = !mode3D;
 
-    console.log(WIDTH.y + "x" + HEIGHT.y + " area");
-    console.log(WIDTH.x + " " + HEIGHT.x);
+        if (mode3D) {
+            modeButton.html("2D");
+        }
+        else {
+            modeButton.html("3D");
 
-    sourceLocation = createVector(int(random(0, WIDTH.y)), int(random(0, HEIGHT.y)));
+        }
+        canvas.remove();
+        canvas = null;
 
-    // We plus one caues 0 indexed
-    console.log("Source at (" + (sourceLocation.x+1) + ", " + (sourceLocation.y+1) + ")");
+        remove();
 
-    for (var x = 0; x < WIDTH.y; x++) {
-        grid.push([]);
-        for (var y = 0; y < HEIGHT.y; y++) {
-            if (sourceLocation.x == x && sourceLocation.y == y) {
-                sources.push(new Source(createVector((sourceLocation.x + WIDTH.x) * 100, (sourceLocation.y + HEIGHT.x) * 100), sourceLocation));
-                grid[x][y] = new Sink();
-                sources[sources.length-1].temperature = u;
-                // console.log(sources[sources.length-1].pos);
-            }
-            else {
-                sinks.push(new Sink(createVector((x + WIDTH.x)*100, (y + HEIGHT.x)*100)));
-                grid[x][y] = sinks[sinks.length-1];
-                // console.log(sinks[sinks.length-1].pos);
+        new p5();
+    });
+
+    if (init == false) {
+        // Create Sinks and Sources
+        // Get width of map and height of map
+        WIDTH = createVector(0, int(windowWidth/125));
+        HEIGHT = createVector(0.2, int(windowHeight/125));
+
+        console.log(WIDTH.y + "x" + HEIGHT.y + " area");
+        console.log(WIDTH.x + " " + HEIGHT.x);
+
+        sourceLocation = createVector(int(random(0, WIDTH.y)), int(random(0, HEIGHT.y)));
+
+        // We plus one caues 0 indexed
+        console.log("Source at (" + (sourceLocation.x+1) + ", " + (sourceLocation.y+1) + ")");
+
+        for (var x = 0; x < WIDTH.y; x++) {
+            grid.push([]);
+            for (var y = 0; y < HEIGHT.y; y++) {
+                if (sourceLocation.x == x && sourceLocation.y == y) {
+                    sources.push(new Source(createVector((sourceLocation.x + WIDTH.x) * 100, (sourceLocation.y + HEIGHT.x) * 100), sourceLocation));
+                    grid[x][y] = new Sink();
+                    sources[sources.length-1].temperature = u;
+                    // console.log(sources[sources.length-1].pos);
+                }
+                else {
+                    sinks.push(new Sink(createVector((x + WIDTH.x)*100, (y + HEIGHT.x)*100)));
+                    grid[x][y] = sinks[sinks.length-1];
+                    // console.log(sinks[sinks.length-1].pos);
+                }
             }
         }
     }
+
+    init = true;
+
+    setupMode();
 }
 
 function cycleSources() {
     clicks++;
 
     for (var i = 0; i < sources.length; i++) {
-        cycle(sources[i].sourcePos, sources[i].temperature, 1/frameRate());
+        cycle(sources[i].sourcePos, sources[i].temperature, 0.5);
     }
 }
 
@@ -110,13 +178,21 @@ function cycle(sourceOfHeat, startingEnergy, deltaTime) {
 
     while (energy > 0.1) {
         if (distanceOutwards != 0) {
-            // Can be more optimal but will work for now :D
-            for (x = -distanceOutwards; x <= distanceOutwards; x++) {
-                for (y = -distanceOutwards; y <= distanceOutwards; y++) {
-                    if (x == -distanceOutwards || x == distanceOutwards || y == -distanceOutwards || y == distanceOutwards) {
+            for (var x = -distanceOutwards; x <= distanceOutwards; x++) {
+                if (abs(x) == distanceOutwards) {
+                    for (var y = -distanceOutwards; y <= distanceOutwards; y++) {
                         if (source.x + x >= 0 && source.x + x < WIDTH.y && source.y + y >= 0 && source.y + y < HEIGHT.y) {
                             grid[source.x + x][source.y + y].cycle((energy * deltaTime) * effect);
                         }
+                    }
+                }
+                else {
+                    if (source.x + x >= 0 && source.x + x < WIDTH.y && source.y + distanceOutwards >= 0 && source.y + distanceOutwards < HEIGHT.y) {
+                        grid[source.x + x][source.y + distanceOutwards].cycle((energy * deltaTime) * effect);
+                    }
+
+                    if (source.x + x >= 0 && source.x + x < WIDTH.y && source.y - distanceOutwards >= 0 && source.y - distanceOutwards < HEIGHT.y) {
+                        grid[source.x + x][source.y - distanceOutwards].cycle((energy * deltaTime) * effect);
                     }
                 }
             }
@@ -127,13 +203,29 @@ function cycle(sourceOfHeat, startingEnergy, deltaTime) {
         }
 
         distanceOutwards++;
-        var amountToTake = abs(((startingEnergy || u) / Math.E) / log(index) / k);
+        var amountToTake = (startingEnergy || u) / (Math.E * abs(log(index)) * k);
         energy -= amountToTake;
     }
 }
 
 function draw() {
     background(255);
+    timer -= 2;
+    // orbitControl();
+
+    if (mode3D) {
+        if (keyIsDown(SHIFT)) {
+            camera(mouseX, mouseY, (height/2) / tan(PI/6));
+        }
+        else if (keyIsDown(CONTROL)) {
+            scale(0.5);
+            rotateY(radians(mouseX/2));
+            rotateX(radians(mouseY/2));
+        }
+
+        translate(-width/3, -height/4, 0);
+        rotateX(HALF_PI);
+    }
 
     if (u != uSlider.value()) {
         u = uSlider.value();
@@ -145,21 +237,36 @@ function draw() {
 
     k = kSlider.value()/10;
 
-    textSize(16);
-    fill('green');
-    text("U: " + uSlider.value(), uSlider.position().x + uSlider.size().width/2.5, uSlider.position().y - 10);
-    text("K: " + kSlider.value()/10, kSlider.position().x + kSlider.size().width/2.5, kSlider.position().y - 10);
-    text("Cycles : " + clicks, (kSlider.position().x + uSlider.position().x + kSlider.size().width/1.25)/2, kSlider.position().y - 25);
+    textElement.html(". . . . k: " + kSlider.value()/10 + ". . . . Cycles: " + clicks + ". . . . U: " + uSlider.value(), true);
 
-    if (pressed) {
-        cycleSources();
+    if (timer <= 0) {
+        timer = 30;
+        if (pressed) {
+            cycleSources();
+        }
     }
 
     for (var i = 0; i < sinks.length; i++) {
-        sinks[i].draw();
+        if (mode3D) {
+            push();
+            translate(sinks[i].pos.x, sinks[i].pos.y, 0);
+            sinks[i].draw(true);
+            pop();
+        }
+        else {
+            sinks[i].draw(false);
+        }
     }
 
     for (var i = 0; i < sources.length; i++) {
-        sources[i].draw();
+        if (mode3D) {
+            push();
+            translate(sources[i].pos.x, sources[i].pos.y, 0);
+            sources[i].draw(true);
+            pop();
+        }
+        else {
+            sources[i].draw(false);
+        }
     }
 }

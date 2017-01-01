@@ -14,13 +14,22 @@ class Sink {
         }
     }
 
-    draw() {
+    draw(is3D) {
+        this.timer -= 1;
         fill(this.color);
-        rect(this.pos.x, this.pos.y, 100, 100);
-        textSize(32);
-        textAlign(CENTER);
-        fill('white');
-        text(int(this.temperature), this.pos.x+5, this.pos.y+25, 100, 100);
+
+        if (is3D) {
+            box(100, 100, 100);
+            this.text = null;
+        }
+        else {
+            rect(this.pos.x, this.pos.y, 100, 100);
+
+            textSize(23);
+            textAlign(CENTER);
+            fill('white');
+            text(int(this.temperature), this.pos.x+5, this.pos.y+25, 100, 100);
+        }
     }
 
     reset() {
@@ -30,13 +39,13 @@ class Sink {
 
     cycle(temperatureChange) {
         if (this.temperature < 5) {
-            this.temperature += temperatureChange;
+            this.temperature += u/temperatureChange;
+            this.color = color(this.temperature, green(this.color), blue(this.color)-temperatureChange);
         }
         else {
-            this.temperature += temperatureChange/(2*this.temperature);
+            this.temperature += temperatureChange/(this.temperature);
+            this.color = color(this.temperature, green(this.color), blue(this.color)-temperatureChange/(this.temperature));
         }
-
-        this.color = color(this.temperature, blue(this.color)-temperatureChange, green(this.color));
     }
 }
 
@@ -48,13 +57,18 @@ class Source {
         this.temperature = 100;
     }
 
-    draw() {
+    draw(is3D) {
         fill(this.color);
-        rect(this.pos.x, this.pos.y, 100, 100);
-        textSize(25);
-        textAlign(CENTER);
-        fill('white');
-        text(int(this.temperature) + "  (Source)", this.pos.x+5, this.pos.y+25, 100, 100);
+        if (is3D) {
+            box(100, 100, 100);
+        }
+        else {
+            rect(this.pos.x, this.pos.y, 100, 100);
+            textSize(23);
+            textAlign(CENTER);
+            fill('white');
+            text(int(this.temperature) + "  (Source)", this.pos.x+5, this.pos.y+25, 100, 100);
+        }
     }
 
     cycle(temperatureChange) {
