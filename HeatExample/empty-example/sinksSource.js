@@ -10,7 +10,7 @@ class Sink {
         else {
             this.pos = position;
             this.color = color('blue');
-            this.temperature = -100;
+            this.temperature = 0;
         }
     }
 
@@ -33,8 +33,7 @@ class Sink {
             this.temperature += temperatureChange;
         }
         else {
-            this.temperature += temperatureChange/log(this.temperature);
-            console.log(this.temperature);
+            this.temperature += temperatureChange/(2*this.temperature);
         }
 
         this.color = color(this.temperature, blue(this.color)-temperatureChange, green(this.color));
@@ -42,8 +41,9 @@ class Sink {
 }
 
 class Source {
-    constructor(position) {
+    constructor(position, sourcePosition) {
         this.pos = position;
+        this.sourcePos = sourcePosition;
         this.color = color('red');
         this.temperature = 100;
     }

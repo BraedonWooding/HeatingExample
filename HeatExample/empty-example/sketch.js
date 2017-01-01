@@ -49,8 +49,8 @@ function setup() {
 
     // Create Sinks and Sources
     // Get width of map and height of map
-    WIDTH = createVector(0, int(windowWidth/150));
-    HEIGHT = createVector(0, int(windowHeight/150));
+    WIDTH = createVector(int(windowWidth/650), int(windowWidth/125));
+    HEIGHT = createVector(0, int(windowHeight/125));
 
     console.log(WIDTH.y + "x" + HEIGHT.y + " area");
     console.log(WIDTH.x + " " + HEIGHT.x);
@@ -64,7 +64,7 @@ function setup() {
         grid.push([]);
         for (var y = 0; y < HEIGHT.y; y++) {
             if (sourceLocation.x == x && sourceLocation.y == y) {
-                sources.push(new Source(createVector((sourceLocation.x + WIDTH.x) * 100, (sourceLocation.y + HEIGHT.x) * 100)));
+                sources.push(new Source(createVector((sourceLocation.x + WIDTH.x) * 100, (sourceLocation.y + HEIGHT.x) * 100), sourceLocation));
                 grid[x][y] = new Sink();
                 sources[sources.length-1].temperature = u;
                 // console.log(sources[sources.length-1].pos);
@@ -78,10 +78,17 @@ function setup() {
     }
 }
 
+function cycleSources() {
+    clicks++;
+
+    for (var i = 0; i < sources.length; i++) {
+        cycle(sources[i].sourcePos, sources[i].temperature, 1/frameRate());
+    }
+}
+
 function keyPressed() {
     if (keyCode == 32) {
-        cycle(undefined, undefined, 1/frameRate());
-        clicks++;
+        cycleSources();
     }
 }
 
@@ -97,6 +104,7 @@ function cycle(sourceOfHeat, startingEnergy, deltaTime) {
     console.log("Cycling by one second/iteration");
     var energy = startingEnergy || u;
     var distanceOutwards = 0.0;
+    var effect = 1;
 
     source = sourceOfHeat || sourceLocation;
 
@@ -107,7 +115,7 @@ function cycle(sourceOfHeat, startingEnergy, deltaTime) {
                 for (y = -distanceOutwards; y <= distanceOutwards; y++) {
                     if (x == -distanceOutwards || x == distanceOutwards || y == -distanceOutwards || y == distanceOutwards) {
                         if (source.x + x >= 0 && source.x + x < WIDTH.y && source.y + y >= 0 && source.y + y < HEIGHT.y) {
-                            grid[source.x + x][source.y + y].cycle(energy * deltaTime);
+                            grid[source.x + x][source.y + y].cycle((energy * deltaTime) * effect);
                         }
                     }
                 }
@@ -119,9 +127,8 @@ function cycle(sourceOfHeat, startingEnergy, deltaTime) {
         }
 
         distanceOutwards++;
-        var amountToTake = (index * pow(energy, 2)) / (k + 1);
-        energy -= ((startingEnergy || u) / energy) * amountToTake;
-        // console.log(energy);
+        var amountToTake = abs(((startingEnergy || u) / Math.E) / log(index) / k);
+        energy -= amountToTake;
     }
 }
 
@@ -145,8 +152,7 @@ function draw() {
     text("Cycles : " + clicks, (kSlider.position().x + uSlider.position().x + kSlider.size().width/1.25)/2, kSlider.position().y - 25);
 
     if (pressed) {
-        cycle(undefined, undefined, 1/frameRate());
-        clicks++;
+        cycleSources();
     }
 
     for (var i = 0; i < sinks.length; i++) {
